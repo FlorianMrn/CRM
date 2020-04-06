@@ -1,26 +1,44 @@
 import React, { Component } from 'react';
 import './App.css';
-import firebase from 'firebase';
-import data from '../data.json';
+import firebase from '../firebase';
 import Grid from './Grid';
 import Form from './Form';
 
 class App extends Component {
 
   state = {
-    data
+   contacts: []
   }
 
-  componentWillMount() {
-    firebase.initializeApp({
-      apiKey: "AIzaSyACxS6IsO9y1KAIdcJD0C40gWba-nGLQsk",
-      authDomain: "crm-linkedin-5b2fd.firebaseapp.com",
-      databaseURL: "https://crm-linkedin-5b2fd.firebaseio.com",
-      projectId: "crm-linkedin-5b2fd",
-      storageBucket: "crm-linkedin-5b2fd.appspot.com",
-      messagingSenderId: "456851432817",
-      appId: "1:456851432817:web:d23100792b59a687ca82d0"
+  updateData = () => {
+    const db = firebase.firestore();
+
+
+    db.collection('contacts').get()
+    .then((snapshot) => {
+      let contacts = [];
+      snapshot.forEach((doc) => {
+        let contact = Object.assign({id : doc.id}, doc.data());
+        contacts.push(contact);
+      })
+      this.setState({
+        contacts
+      })
     })
+    .catch((err) => {
+      console.log('erreur', err);
+    })
+  }
+  componentDidMount() {
+    this.updateData();
+  }
+
+  deleteData = (docId) => {
+    const db = firebase.firestore();
+
+    db.collection('contacts').doc(docId).delete();
+    this.updateData();
+
   }
 
   render() {
@@ -34,8 +52,8 @@ class App extends Component {
           </nav>
         </div>
         <div>
-          <Form />  
-          <Grid items={this.state.data}/>
+          <Form updateData={this.updateData}/>  
+          <Grid items={this.state.contacts} deleteData={this.deleteData}/>
         </div>
       </div>
     );
